@@ -5,6 +5,7 @@ const Simulator = require('./simulator');
 const PowerCalculator = require('./powerCalculator');
 const AlertEngine = require('./alertEngine');
 const logger = require('./utils/logger');
+const { startWebSocketServer } = require('./websocket');
 const errorHandler = require('./middleware/errorHandler');
 
 const statusRouter = require('./routes/status');
@@ -43,6 +44,8 @@ app.use((req, res) => {
 });
 
 app.use(errorHandler);
+
+startWebSocketServer(simulator, alertEngine, powerCalculator);
 
 const server = app.listen(config.port, () => {
   logger.info(`Backend running on http://${config.host}:${config.port}`);
