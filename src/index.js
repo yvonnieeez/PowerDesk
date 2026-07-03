@@ -6,6 +6,7 @@ const PowerCalculator = require('./powerCalculator');
 const AlertEngine = require('./alertEngine');
 const logger = require('./utils/logger');
 const { startWebSocketServer } = require('./websocket');
+const requestLogger = require('./middleware/requestLogger');
 const errorHandler = require('./middleware/errorHandler');
 
 const statusRouter = require('./routes/status');
@@ -28,6 +29,7 @@ simulator.start();
 
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
 app.use('/api/status', statusRouter);
 app.use('/api/devices', devicesRouter);
