@@ -6,6 +6,7 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 
 const statusRouter = require('./routes/status');
+const devicesRouter = require('./routes/devices');
 
 const app = express();
 const simulator = new Simulator();
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/status', statusRouter);
+app.use('/api/devices', devicesRouter);
 
 app.use((req, res) => {
   res.status(404).json({
