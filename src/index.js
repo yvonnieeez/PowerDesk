@@ -1,14 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const config = require('./config');
+const Simulator = require('./simulator');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 
 const statusRouter = require('./routes/status');
 
 const app = express();
+const simulator = new Simulator();
 
 app.locals.startTime = Date.now();
+app.locals.simulator = simulator;
+
+simulator.start();
 
 app.use(cors());
 app.use(express.json());
