@@ -1,8 +1,8 @@
 # SPEC.md — Lights, Fans, Discord: The Boss's Big Idea
-**Techhathon Nationals × IUT Robotics Society**  
-**Version:** 1.0 (Canonical)  
+**Techathon Nationals × IUT Robotics Society**  
+**Version:** 2.0 (Canonical)  
 **Status:** Single Source of Truth  
-**Last reviewed:** July 2026
+**Last updated:** July 2026
 
 > **⚠️ Device Count Fix (read first)**  
 > The problem statement contains an error: it says "18 devices." The correct count is **15 devices total** — 3 rooms × 5 devices per room (2 fans + 3 lights). Every test, assertion, log message, and hardcoded count in the codebase must use **15**, not 18.
@@ -21,9 +21,10 @@
 8. [Shared Integration Contract](#8-shared-integration-contract)
 9. [Alert Rules](#9-alert-rules)
 10. [Power Calculation Rules](#10-power-calculation-rules)
-11. [Deliverables Checklist](#11-deliverables-checklist)
-12. [Evaluation Criteria](#12-evaluation-criteria)
-13. [Git Strategy](#13-git-strategy)
+11. [Deployment](#11-deployment)
+12. [Deliverables Checklist](#12-deliverables-checklist)
+13. [Evaluation Criteria](#13-evaluation-criteria)
+14. [Git Strategy](#14-git-strategy)
 
 ---
 
@@ -113,23 +114,42 @@ interface Device {
 ### 4.1 Repository Structure
 
 ```
-lights-fans-discord/
-├── backend/             # Express.js API + WebSocket + simulator
-├── dashboard/           # React + Vite frontend
-├── discord-bot/         # Discord.js bot (TypeScript)
-├── diagrams/            # System diagram + circuit schematic (required deliverables)
-└── README.md            # Root setup instructions
+powerdesk/
+├── src/                        # Backend (CommonJS) + Dashboard (TypeScript/ESM)
+│   ├── index.js                # Express + WebSocket entry point
+│   ├── simulator.js            # Device state simulation engine
+│   ├── powerCalculator.js      # Power consumption calculations
+│   ├── alertEngine.js          # Alert detection (after-hours, continuous runtime)
+│   ├── websocket.js            # WebSocket broadcasting
+│   ├── config.js               # Environment configuration
+│   ├── routes/                 # REST API routes
+│   ├── middleware/              # Express middleware
+│   ├── components/             # React UI components
+│   ├── store/                  # Zustand state management
+│   ├── types/                  # TypeScript types + Zod schemas
+│   └── utils/                  # Shared utilities
+├── discord-bot/                # Discord bot (TypeScript, ESM)
+│   └── src/
+│       ├── index.ts            # Bot entry point
+│       ├── commands/           # Slash + prefix command handlers
+│       ├── formatters/         # Response formatting
+│       ├── api/                # Backend API client
+│       ├── ws/                 # WebSocket alert listener
+│       └── llm/                # Groq LLM humanization
+├── test/                       # Backend tests (57 tests)
+├── docs/                       # Diagrams and specs
+└── context/                    # Design specifications
 ```
 
-### 4.2 Ports (Development)
+### 4.2 Ports
 
 | Service | Protocol | Port |
 |---|---|---|
 | Backend REST API | HTTP | `5000` |
-| Backend WebSocket | WS | `5000` (same server, `/ws` path) or `8080` (separate) |
-| React Dashboard | HTTP | `5173` (Vite default) |
+| Backend WebSocket | WS | `5000` (shared with Express) |
+| Discord Bot | HTTP | `PORT` env var (health check only) |
 
-> Prefer serving WebSocket on the same port as HTTP (e.g. via `ws` library upgrade on the same Express server) to avoid CORS complications.
+> WebSocket is served on the same port as Express via `ws` library upgrade on the HTTP server. This is required for Render deployment (single exposed port).
 
 ### 4.3 Layered Architecture
 
@@ -154,62 +174,68 @@ lights-fans-discord/
 └─────────────────────────────────────────┘
 ```
 
+### 4.4 Mixed Module Systems
+
+| Component | Module System | Runtime |
+|-----------|--------------|---------|
+| Backend (`src/*.js`) | CommonJS (`require`/`module.exports`) | Node.js |
+| Dashboard (`src/*.tsx`) | ESM (import/export) | Vite bundle |
+| Discord Bot (`discord-bot/src/*.ts`) | ESM (import/export) | tsx |
+
 ---
 
 ## 5. Backend Specification
 
-**Owner:** Person 0  
-**Branch:** `backend/main`  
-**Language:** Node.js (JavaScript, ES Modules)  
-**Framework:** Express.js
+**Language:** Node.js (JavaScript, CommonJS)  
+**Framework:** Express 5  
+**Runtime:** Node.js 18+
 
 ### 5.1 Technology Stack
 
 | Layer | Choice |
 |---|---|
 | Runtime | Node.js 18+ |
-| HTTP Framework | Express.js |
-| Real-time | Native `ws` library (WebSocket upgrade on same port as Express) |
-| Validation | Zod or manual validation |
-| Logging | `pino` (structured) or `console` |
+| HTTP Framework | Express 5.2.1 |
+| Real-time | `ws` library (WebSocket upgrade on same HTTP server) |
+| Validation | Zod |
+| Logging | Custom logger (console-based) |
 | Config | `dotenv` |
 
 ### 5.2 Folder Structure
 
 ```
-backend/
-├── src/
-│   ├── index.js              # Entry — Express + WS setup, starts simulator
-│   ├── config.js             # Env var loading, constants
-│   ├── simulator.js          # Device state store + simulation engine
-│   ├── powerCalculator.js    # Power aggregation functions
-│   ├── alertEngine.js        # Alert detection + broadcast
-│   ├── routes/
-│   │   ├── devices.js        # GET /api/devices, GET /api/devices/:room
-│   │   ├── power.js          # GET /api/power/summary
-│   │   └── alerts.js         # GET /api/alerts
-│   ├── models/
-│   │   └── device.js         # Device schema + factory function
-│   ├── utils/
-│   │   ├── logger.js
-│   │   ├── timings.js        # isOfficeHours(), continuous runtime helpers
-│   │   └── constants.js      # FAN_WATTAGE, LIGHT_WATTAGE, ROOMS, OFFICE_HOURS
-│   └── middleware/
-│       └── errorHandler.js
-├── .env.example
-├── package.json
-└── README.md
+src/
+├── index.js              # Entry — Express + WS setup, starts simulator
+├── config.js             # Env var loading, constants
+├── simulator.js          # Device state store + simulation engine
+├── powerCalculator.js    # Power aggregation functions
+├── alertEngine.js        # Alert detection + broadcast
+├── websocket.js          # WebSocket server (attaches to Express HTTP server)
+├── routes/
+│   ├── status.js         # GET /api/status
+│   ├── devices.js        # GET /api/devices, GET /api/devices/:room
+│   ├── power.js          # GET /api/power, GET /api/power/summary
+│   └── alerts.js         # GET /api/alerts
+├── middleware/
+│   ├── errorHandler.js   # Global error handler
+│   ├── validation.js     # Request validation helpers
+│   └── requestLogger.js  # 4xx/5xx logging
+└── utils/
+    ├── logger.js         # Console logging wrapper
+    ├── response.js       # Standard envelope helpers
+    ├── constants.js      # Rooms, power wattages
+    └── timings.js        # After-hours & runtime helpers
+test/                     # 10 test files, 57 tests
 ```
 
 ### 5.3 Device Simulator (`simulator.js`)
 
 **Initialization:** Creates all 15 devices in memory on startup. Each device gets a random initial `status` and `lastChanged` within the past 2 hours.
 
-**Simulation loop:** Every 30–60 seconds (random interval), each device independently has a ~20% chance of toggling its status. On toggle:
+**Simulation loop:** Every 30–60 seconds (random interval), the simulator flips 1-2 devices. On flip:
 - Update `status`
 - Update `lastChanged` to `new Date().toISOString()`
-- Broadcast `device_update` WebSocket event
-- Re-evaluate alert conditions
+- Emit `deviceChanged` event (triggers alert check + WebSocket broadcast)
 
 **Exported API (used by routes):**
 ```js
@@ -228,6 +254,16 @@ All responses use this envelope:
   "timestamp": "2025-01-15T14:30:00Z",
   "error": null
 }
+```
+
+---
+
+#### `GET /api/status`
+
+Health check endpoint. Returns `200 OK` if backend is up.
+
+```json
+{ "success": true, "data": { "status": "healthy", "backend": { "uptime": 3600, "version": "1.0.0" }, "simulator": { "running": true, "devicesTracked": 15, "lastUpdate": "..." } }, "timestamp": "..." }
 ```
 
 ---
@@ -269,16 +305,43 @@ Returns the 5 devices for a specific room.
 }
 ```
 
-**Error (400):**
+**Error (404):**
 ```json
-{ "success": false, "data": null, "timestamp": "...", "error": { "code": "INVALID_ROOM", "message": "Room 'xyz' not found. Valid: drawing-room, work-room-1, work-room-2" } }
+{ "success": false, "data": null, "timestamp": "...", "error": { "code": "ROOM_NOT_FOUND", "message": "Room 'xyz' not found. Valid: drawing-room, work-room-1, work-room-2" } }
+```
+
+---
+
+#### `GET /api/power`
+
+Full power consumption payload.
+
+**Response `data` shape:**
+```json
+{
+  "totalPower": 240,
+  "unit": "Watts",
+  "byRoom": {
+    "drawing-room": { "power": 90, "activeDevices": 3 },
+    "work-room-1": { "power": 75, "activeDevices": 2 },
+    "work-room-2": { "power": 75, "activeDevices": 2 }
+  },
+  "breakdown": {
+    "fans": { "count": 2, "power": 120 },
+    "lights": { "count": 5, "power": 75 }
+  },
+  "dailyEstimate": {
+    "kWh": 1.6,
+    "period": "9 AM - 5 PM (8 hours)"
+  }
+}
 ```
 
 ---
 
 #### `GET /api/power/summary`
 
-Returns current power draw — total and per-room — plus today's estimated kWh.
+Returns current power draw — total and per-room — plus today's estimated kWh. Bot-friendly lean payload.
 
 **Response `data` shape:**
 ```json
@@ -293,15 +356,16 @@ Returns current power draw — total and per-room — plus today's estimated kWh
 }
 ```
 
-**How `estimatedKwhToday` is calculated:** `totalWatts × hoursElapsedToday / 1000`. Hours elapsed = current hour + (current minute / 60).
+**How `estimatedKwhToday` is calculated:** `(totalPower / 1000) * officeHoursElapsed`, clamped to the office-hour window (default 9 AM–5 PM).
 
 ---
 
 #### `GET /api/alerts`
 
-Returns the current list of active alerts (not historical — only conditions that are true right now, plus any triggered in the past 60 minutes).
+Returns the current list of active alerts plus any triggered in the past.
 
 **Query params:**
+- `?since=ISO-8601` — only alerts after this timestamp
 - `?limit=N` — cap results (default 20)
 
 **Response `data` shape:**
@@ -309,185 +373,193 @@ Returns the current list of active alerts (not historical — only conditions th
 {
   "alerts": [
     {
-      "id": "alert-uuid",
+      "id": "alert-001",
       "type": "after-hours",
+      "severity": "warning",
       "room": "work-room-2",
-      "message": "Devices left on after office hours (5 PM)",
-      "triggeredAt": "2025-01-15T17:05:00Z"
+      "message": "Work Room 2 still has 2 fans and 3 lights ON at 10:30 PM (after office hours)",
+      "devices": [
+        { "id": "work-room-2-fan-1", "name": "Fan 1" },
+        { "id": "work-room-2-fan-2", "name": "Fan 2" }
+      ],
+      "triggeredAt": "2025-01-15T22:30:00Z",
+      "resolvedAt": null
     }
-  ]
+  ],
+  "activeCount": 1,
+  "resolvedCount": 0
 }
 ```
 
----
+**Alert types:**
 
-#### `GET /api/status`
-
-Health check endpoint. Returns `200 OK` if backend is up.
-
-```json
-{ "success": true, "data": { "status": "ok", "deviceCount": 15, "uptime": 3600 }, "timestamp": "..." }
-```
+| Type | Severity | Condition |
+|---|---|---|
+| `after-hours` | `warning` | ≥1 device ON outside office hours |
+| `continuous-runtime` | `info` | Any device ON continuously for ≥2 hours |
 
 ---
 
 ### 5.5 WebSocket Events
 
-WebSocket endpoint: `ws://localhost:5000` (or `ws://localhost:8080`).
+WebSocket is served on the **same port as Express** (port 5000). No separate port.
 
-The server **broadcasts** the following events to all connected clients whenever state changes:
+The server **broadcasts** the following events to all connected clients:
 
-**Event: `device_update`**
+**Event: `device-update`**
 ```json
 {
-  "event": "device_update",
-  "data": {
+  "type": "device-update",
+  "timestamp": "2026-07-04T10:00:00.000Z",
+  "device": {
     "id": "work-room-2-fan-1",
-    "status": false,
-    "powerDraw": 0,
-    "lastChanged": "2025-01-15T14:31:00Z"
-  }
-}
-```
-
-**Event: `alert`**
-```json
-{
-  "event": "alert",
-  "data": {
-    "id": "alert-uuid",
-    "type": "after-hours",
     "room": "work-room-2",
-    "message": "Devices left on after office hours (5 PM)",
-    "triggeredAt": "2025-01-15T17:05:00Z"
+    "status": true,
+    "powerDraw": 60,
+    "lastChanged": "2026-07-04T10:00:00.000Z"
   }
 }
 ```
 
-**Event: `power_update`**
+**Event: `alert-triggered`**
 ```json
 {
-  "event": "power_update",
+  "type": "alert-triggered",
+  "timestamp": "2026-07-04T22:30:00.000Z",
+  "alert": {
+    "id": "alert-001",
+    "type": "after-hours",
+    "severity": "warning",
+    "room": "work-room-2",
+    "message": "Work Room 2 has 2 fans and 3 lights ON at 10:30 PM (after office hours)",
+    "devices": [{ "id": "work-room-2-fan-1", "name": "Fan 1" }],
+    "triggeredAt": "2026-07-04T22:30:00.000Z"
+  }
+}
+```
+
+**Event: `power-update`**
+```json
+{
+  "type": "power-update",
+  "timestamp": "2026-07-04T10:00:00.000Z",
   "data": {
-    "totalWatts": 225,
-    "estimatedKwhToday": 1.8,
-    "perRoom": {
-      "drawing-room": 75,
-      "work-room-1": 0,
-      "work-room-2": 150
+    "totalPower": 240,
+    "byRoom": {
+      "drawing-room": { "power": 90, "activeDevices": 3 },
+      "work-room-1": { "power": 75, "activeDevices": 2 },
+      "work-room-2": { "power": 75, "activeDevices": 2 }
     }
   }
 }
 ```
 
-> All messages are JSON strings. Clients parse with `JSON.parse(event.data)` and dispatch on `event.event`.
+> `power-update` broadcasts every 5 seconds on a fixed interval, independent of device changes.
 
 ### 5.6 Environment Variables
 
 ```env
 # .env.example
 PORT=5000
-WS_PORT=5000           # If using same port as HTTP, set equal to PORT
-OFFICE_START_HOUR=9    # 24h format
-OFFICE_END_HOUR=17     # 24h format
-SIMULATE_INTERVAL_MIN=30000   # ms
-SIMULATE_INTERVAL_MAX=60000   # ms
+HOST=localhost
+OFFICE_START_HOUR=9
+OFFICE_END_HOUR=17
+SIMULATOR_INTERVAL_MIN=30000
+SIMULATOR_INTERVAL_MAX=60000
+ENABLE_AFTER_HOURS_ALERTS=true
+ENABLE_RUNTIME_ALERTS=true
+CONTINUOUS_RUNTIME_THRESHOLD_HOURS=2
+DEMO_ALERTS=true
 ```
 
 ### 5.7 Acceptance Criteria
 
-- [ ] `GET /api/devices` returns all **15 devices** in the nested room structure.
-- [ ] `GET /api/devices/:room` returns exactly **5 devices** for a valid room.
-- [ ] Invalid room ID returns 400 with `INVALID_ROOM` error code.
-- [ ] `GET /api/power/summary` returns correct watt totals (sum of `powerDraw` of all ON devices).
-- [ ] `GET /api/alerts` returns valid alert array (may be empty).
-- [ ] `GET /api/status` returns 200 with `deviceCount: 15`.
-- [ ] Simulator toggles device states every 30–60 seconds.
-- [ ] WebSocket broadcasts `device_update` on every state change.
-- [ ] WebSocket broadcasts `alert` when an alert condition is triggered.
-- [ ] CORS is enabled for `http://localhost:5173`.
-- [ ] No unhandled promise rejections.
+- [x] `GET /api/devices` returns all **15 devices** in the nested room structure.
+- [x] `GET /api/devices/:room` returns exactly **5 devices** for a valid room.
+- [x] Invalid room ID returns 404 with `ROOM_NOT_FOUND` error code.
+- [x] `GET /api/power/summary` returns correct watt totals (sum of `powerDraw` of all ON devices).
+- [x] `GET /api/alerts` returns valid alert array with `activeCount` and `resolvedCount`.
+- [x] `GET /api/status` returns 200 with healthy status and simulator metadata.
+- [x] Simulator toggles device states every 30–60 seconds.
+- [x] WebSocket broadcasts `device-update` on every state change.
+- [x] WebSocket broadcasts `alert-triggered` when an alert condition is triggered.
+- [x] WebSocket broadcasts `power-update` every 5 seconds.
+- [x] CORS is enabled for cross-origin consumers.
+- [x] No unhandled promise rejections.
 
 ---
 
 ## 6. Dashboard Specification
 
-**Owner:** Person 2  
-**Branch:** `feature/dashboard`  
 **Language:** TypeScript  
-**Framework:** React + Vite
+**Framework:** React 19 + Vite  
+**Module system:** ESM
 
 ### 6.1 Technology Stack
 
 | Library | Purpose |
 |---|---|
-| `react` + `vite` | Core framework |
+| `react` 19 + `vite` | Core framework |
 | `zustand` | Global state (devices, alerts) |
-| `@tanstack/react-query` | Initial HTTP load + fallback polling |
 | `recharts` | Power consumption chart |
 | `framer-motion` | Fan spin animation, light glow, panel transitions |
 | `lucide-react` | Icon set |
-| `tailwindcss` | Utility styling |
+| `tailwindcss` v4 | Utility styling |
 | `axios` | HTTP client |
 | `zod` | Runtime API response validation |
 | `dayjs` | Timestamp formatting |
 | `typescript` | Static typing |
-| `biome` | Linter + formatter |
 
 ### 6.2 Folder Structure
 
 ```
-dashboard/
-├── public/
-│   └── office-floorplan.svg       # SVG floor plan
-├── src/
-│   ├── main.tsx
-│   ├── App.tsx
-│   ├── types.ts                   # Device, Alert, PowerSummary interfaces
-│   ├── api/
-│   │   ├── client.ts              # Axios instance (baseURL from env)
-│   │   ├── devices.ts             # getDevices(), getDevicesByRoom()
-│   │   └── power.ts               # getPowerSummary()
-│   ├── ws/
-│   │   └── useOfficeSocket.ts     # WS hook — connects, parses events, pushes to store
-│   ├── store/
-│   │   ├── deviceStore.ts         # Zustand — devices[], setDevices(), updateDevice()
-│   │   └── alertStore.ts          # Zustand — alerts[], addAlert(), dismissAlert()
-│   ├── hooks/
-│   │   ├── useDevices.ts          # Merges React Query + WS live updates
-│   │   ├── usePowerSummary.ts     # Polls /api/power/summary every 5s
-│   │   └── useAlerts.ts           # Reads alert store, newest first
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── DashboardLayout.tsx
-│   │   │   └── TopBar.tsx         # Office name + connection status dot
-│   │   ├── room/
-│   │   │   ├── RoomGrid.tsx       # Maps 3 rooms → RoomCard
-│   │   │   └── RoomCard.tsx       # Room name, device list, room power total
-│   │   ├── device/
-│   │   │   ├── DeviceCard.tsx     # Fan or Light — name, status badge, wattage
-│   │   │   ├── FanIcon.tsx        # Animated SVG fan (spins when ON)
-│   │   │   └── LightIcon.tsx      # Glowing bulb SVG (glows when ON)
-│   │   ├── power/
-│   │   │   ├── PowerMeter.tsx     # Total watts display
-│   │   │   ├── RoomPowerBar.tsx   # Per-room horizontal bar
-│   │   │   └── PowerChart.tsx     # Recharts line chart
-│   │   ├── alerts/
-│   │   │   ├── AlertPanel.tsx     # Scrollable alert list
-│   │   │   └── AlertItem.tsx      # Icon + message + timestamp
-│   │   └── floorplan/
-│   │       ├── FloorPlan.tsx      # SVG-based office map (BONUS)
-│   │       ├── FanMarker.tsx      # Spinning fan on floor plan
-│   │       └── LightMarker.tsx    # Glowing dot on floor plan
-│   └── utils/
-│       ├── deviceHelpers.ts       # groupByRoom(), countOn(), totalWatts()
-│       └── formatters.ts          # formatWatts(), formatTime(), formatRoomName()
-├── .env.example
-├── tailwind.config.ts
-├── vite.config.ts
-├── tsconfig.json
-├── biome.json
-└── README.md
+src/
+├── main.tsx
+├── App.tsx
+├── env.ts                    # Zod-validated environment variables
+├── types/
+│   ├── device.ts             # Device type + Zod schema + isDeviceOn() helper
+│   └── alert.ts              # Alert type + Zod schema
+├── api/
+│   ├── client.ts             # Axios instance (baseURL from env)
+│   ├── devices.ts            # getDevices(), getDevicesByRoom()
+│   └── power.ts              # getPowerSummary()
+├── ws/
+│   └── useOfficeSocket.ts    # WS hook — connects, parses events, pushes to store
+├── store/
+│   ├── deviceStore.ts        # Zustand — devices[], setDevices(), updateDevice()
+│   ├── alertStore.ts         # Zustand — alerts[], addAlert(), dismissAlert()
+│   └── powerStore.ts         # Zustand — power data, addPowerReading()
+├── components/
+│   ├── layout/
+│   │   ├── DashboardLayout.tsx
+│   │   └── TopBar.tsx        # Office name + connection status dot
+│   ├── room/
+│   │   ├── RoomGrid.tsx      # Maps 3 rooms → RoomCard
+│   │   └── RoomCard.tsx      # Room name, device list, room power total
+│   ├── device/
+│   │   ├── DeviceCard.tsx    # Fan or Light — name, status badge, wattage
+│   │   ├── FanIcon.tsx       # Animated SVG fan (spins when ON)
+│   │   └── LightIcon.tsx     # Glowing bulb SVG (glows when ON)
+│   ├── power/
+│   │   ├── PowerMeter.tsx    # Total watts display
+│   │   ├── RoomPowerBar.tsx  # Per-room horizontal bar
+│   │   └── PowerChart.tsx    # Recharts line chart
+│   ├── alerts/
+│   │   ├── AlertPanel.tsx    # Scrollable alert list
+│   │   └── AlertItem.tsx     # Icon + message + timestamp
+│   └── floorplan/
+│       ├── FloorPlan.tsx     # SVG-based office map
+│       ├── FanMarker.tsx     # Spinning fan on floor plan
+│       ├── LightMarker.tsx   # Glowing dot on floor plan
+│       └── RoomOverlay.tsx   # Room boundary + click handler
+├── hooks/
+│   └── useAlerts.ts          # Reads alert store, newest first
+├── constants/
+│   └── rooms.ts              # Room definitions
+└── utils/
+    ├── deviceHelpers.ts      # groupByRoom(), countOn(), totalWatts() — uses isDeviceOn()
+    └── formatters.ts         # formatWatts(), formatTime(), formatRoomName()
 ```
 
 ### 6.3 Required Features (Minimum — graded)
@@ -496,7 +568,7 @@ dashboard/
 - Displays all **15 devices** organized by room (3 room cards, 5 devices each).
 - Each device shows: name, type icon, ON/OFF status badge, wattage when ON.
 - Updates in real time via WebSocket — no page refresh required.
-- Each device card uses `React.memo` to avoid unnecessary re-renders.
+- Uses `isDeviceOn()` helper to handle both boolean and string status formats.
 
 #### Live Power Consumption Meter
 - Shows current total watts across entire office.
@@ -507,13 +579,12 @@ dashboard/
 - Shows timestamped alerts for anomalous conditions (see §9).
 - Auto-updates when new alerts arrive via WebSocket.
 - Each alert shows: type icon, human-readable message, `triggeredAt` formatted as local time.
-- Cap at 20 alerts in memory (drop oldest).
 
 ### 6.4 Bonus Features (graded under UX quality)
 
 - **Animated floor plan** with top-view office layout: fans spin when ON, lights glow when ON.
-- Fan rotation: `framer-motion` continuous `rotate` animation, paused when OFF.
-- Light glow: CSS box-shadow / drop-shadow pulse when ON, dim when OFF.
+- Fan rotation: CSS animation, spins when ON, pauses when OFF.
+- Light glow: CSS box-shadow / drop-shadow when ON, dim when OFF.
 - Room overlays pulse amber when that room has an active alert.
 
 ### 6.5 State Management
@@ -536,32 +607,13 @@ dashboard/
 ```
 
 **Data flow:**
-1. Mount: React Query `GET /api/devices` → `setDevices()`
-2. `useOfficeSocket` connects to `ws://backend/ws`
-3. `device_update` event → `updateDevice(id, patch)` (no re-fetch)
-4. `alert` event → `addAlert(alert)`
-5. `power_update` event → local power state
-6. Components read only from hooks, never stores directly.
+1. Mount: fetch `GET /api/devices` → `setDevices()`
+2. `useOfficeSocket` connects to `ws://backend`
+3. `device-update` event → `updateDevice(id, patch)` (no re-fetch)
+4. `alert-triggered` event → `addAlert(alert)`
+5. `power-update` event → local power state
 
-### 6.6 Visual Design (Dark theme)
-
-```
-Background:     #0f1117
-Surface:        #1a1d27
-Border:         #2d3147
-Primary accent: #6366f1  (indigo)
-Fan ON:         #38bdf8  (sky blue)
-Light ON:       #fbbf24  (amber)
-Alert:          #f59e0b
-Critical:       #ef4444
-Text primary:   #f1f5f9
-Text muted:     #64748b
-Success:        #22c55e
-```
-
-Typography: `Inter` for UI, `JetBrains Mono` or `ui-monospace` for watt values.
-
-### 6.7 Environment Variables
+### 6.6 Environment Variables
 
 ```env
 # .env.example
@@ -569,83 +621,96 @@ VITE_BACKEND_URL=http://localhost:5000
 VITE_WS_URL=ws://localhost:5000
 ```
 
-### 6.8 Acceptance Criteria
+### 6.7 Acceptance Criteria
 
-- [ ] Dashboard loads and shows all **15 devices** without blank state.
-- [ ] Device status matches `!status` from the bot at the same moment.
-- [ ] Device state change on backend → dashboard updates within 2 seconds, no refresh.
-- [ ] Total watts matches `/api/power/summary`.
-- [ ] At least one alert renders correctly with timestamp.
-- [ ] Fan icons visibly spin when ON.
-- [ ] Light icons visibly glow when ON.
-- [ ] Connection status dot in TopBar reflects WS state.
-- [ ] No console errors during normal operation.
-- [ ] Responsive at 1280px desktop and 768px tablet.
+- [x] Dashboard loads and shows all **15 devices** without blank state.
+- [x] Device state change on backend → dashboard updates within 2 seconds, no refresh.
+- [x] Total watts matches `/api/power/summary`.
+- [x] Fan icons visibly spin when ON.
+- [x] Light icons visibly glow when ON.
+- [x] Connection status dot in TopBar reflects WS state.
+- [x] No console errors during normal operation.
+- [x] TypeScript compiles with zero errors.
 
 ---
 
 ## 7. Discord Bot Specification
 
-**Owner:** Person 1  
-**Branch:** `feature/discord-bot`  
 **Language:** TypeScript  
-**Library:** `discord.js` v14
+**Module system:** ESM (`"type": "module"` in package.json)  
+**Runtime:** tsx (TypeScript execute)
 
 ### 7.1 Technology Stack
 
 | Package | Purpose |
 |---|---|
-| `discord.js` | Discord API client |
+| `discord.js` v14 | Discord API client |
 | `@discordjs/rest` | Slash command registration |
 | `axios` | HTTP client for backend |
 | `ws` | WebSocket for alert subscription |
 | `dotenv` | Env vars |
 | `zod` | Validate env + backend responses |
 | `typescript` | Static typing |
-| `tsx` | Dev-time TypeScript runner |
-| `pino` or `winston` | Structured logging |
-| `groq` or `openai` (optional) | LLM humanization of responses |
+| `tsx` | TypeScript runner (in dependencies, not devDependencies) |
+| `pino` + `pino-pretty` | Structured logging |
+| Groq API (optional) | LLM humanization of responses |
 
 ### 7.2 Folder Structure
 
 ```
 discord-bot/
 ├── src/
-│   ├── index.ts
-│   ├── config.ts              # Zod-validated env vars
-│   ├── types.ts               # Device, Alert, PowerSummary types
+│   ├── index.ts              # Entry point + health check server
+│   ├── config.ts             # Zod-validated env vars
+│   ├── types.ts              # Device, Alert, PowerSummary types + Zod schemas
 │   ├── commands/
-│   │   ├── index.ts           # Command registry
-│   │   ├── status.ts          # !status / /status
-│   │   ├── room.ts            # !room <name> / /room
-│   │   └── usage.ts           # !usage / /usage
+│   │   ├── index.ts          # Command registry
+│   │   ├── status.ts         # !status / /status
+│   │   ├── room.ts           # !room <name> / /room
+│   │   └── usage.ts          # !usage / /usage
 │   ├── events/
 │   │   ├── ready.ts
 │   │   ├── interactionCreate.ts
 │   │   └── messageCreate.ts
 │   ├── api/
-│   │   ├── client.ts          # Axios base
-│   │   ├── devices.ts
-│   │   └── power.ts
+│   │   ├── client.ts         # Axios base (baseURL from BACKEND_BASE_URL)
+│   │   ├── devices.ts        # getAllDevices(), getDevicesByRoom()
+│   │   ├── power.ts          # getPowerSummary()
+│   │   └── errors.ts         # BotError class
 │   ├── ws/
-│   │   └── alertListener.ts   # WS connection + alert forwarding
+│   │   └── alertListener.ts  # WS connection + alert forwarding
 │   ├── formatters/
 │   │   ├── statusFormatter.ts
 │   │   ├── roomFormatter.ts
 │   │   ├── usageFormatter.ts
 │   │   └── alertFormatter.ts
 │   └── llm/
-│       └── humanize.ts        # Optional LLM wrapper
+│       └── humanize.ts       # Groq LLM wrapper
 ├── scripts/
-│   └── registerCommands.ts
+│   └── registerCommands.ts   # One-time slash command registration
+├── tests/                    # 6 test files, 55 tests
 ├── .env.example
 ├── package.json
 ├── tsconfig.json
-├── biome.json
-└── README.md
+└── biome.json
 ```
 
-### 7.3 Required Commands
+### 7.3 Health Check Server
+
+The bot runs a minimal HTTP server on `PORT` (set by Render) for health checks:
+
+```ts
+import http from "node:http";
+const healthServer = http.createServer((_req, res) => {
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ status: "ok" }));
+});
+healthServer.listen(parseInt(process.env.PORT || "3000", 10));
+```
+
+This is required for Render deployment — the platform needs to detect an open port.
+
+### 7.4 Required Commands
 
 Support both prefix (`!`) and slash (`/`) syntax. Both paths call identical handlers.
 
@@ -655,7 +720,7 @@ Support both prefix (`!`) and slash (`/`) syntax. Both paths call identical hand
 
 **Backend call:** `GET /api/devices`
 
-**Behavior:** Summarize the on/off state of all **15 devices** across all 3 rooms in a friendly, conversational message.
+**Behavior:** Summarize the on/off state of all **15 devices** across all 3 rooms.
 
 **Template fallback (if no LLM):**
 ```
@@ -711,14 +776,15 @@ Breakdown: Drawing Room 75W · Work Room 1 0W · Work Room 2 150W
 
 ---
 
-### 7.4 Proactive Alert Subscription (Bonus — graded)
+### 7.5 Proactive Alert Subscription
 
-The bot maintains a persistent WebSocket connection to `ws://BACKEND_HOST/ws`.
+The bot maintains a persistent WebSocket connection to `BACKEND_WS_URL`.
 
-On `alert` event:
-1. Parse `{ type, room, message, triggeredAt }`
-2. Format with `alertFormatter.ts`
-3. Post to `ALERT_CHANNEL_ID`
+On `alert-triggered` event:
+1. Parse the alert payload
+2. Validate with Zod (`alertPayloadSchema`)
+3. Format with `alertFormatter.ts`
+4. Post to `ALERT_CHANNEL_ID`
 
 **Alert message example:**
 ```
@@ -726,24 +792,25 @@ On `alert` event:
 Work Room 2 still has 2 fans and 3 lights ON. Office hours ended at 5 PM. Did someone forget to leave?
 ```
 
-WebSocket reconnects automatically on disconnect (exponential backoff, max 5 retries).
+WebSocket reconnects automatically on disconnect (exponential backoff, max 30s delay).
 
-### 7.5 LLM Humanization (Optional but strongly encouraged)
+### 7.6 LLM Humanization (Optional but encouraged)
 
 Function signature:
 ```ts
 export async function humanize(
   type: "status" | "room" | "usage" | "alert",
   data: unknown
-): Promise<string>
+): Promise<string | undefined>
 ```
 
-- Use any LLM provider (Groq, OpenRouter, OpenAI).
-- Max 150 output tokens per call.
-- On LLM failure → silently fall back to template formatter.
-- Never let LLM failure surface as a user-visible error.
+- Uses Groq API (`https://api.groq.com/openai/v1/chat/completions`)
+- Model: `llama-3.3-70b-versatile` (configurable via `GROQ_MODEL`)
+- Max 150 output tokens per call
+- On LLM failure → silently fall back to template formatter
+- Disabled entirely when `GROQ_API_KEY` is blank
 
-### 7.6 Environment Variables
+### 7.7 Environment Variables
 
 ```env
 # .env.example
@@ -756,13 +823,13 @@ COMMAND_PREFIX=!
 BACKEND_BASE_URL=http://localhost:5000
 BACKEND_WS_URL=ws://localhost:5000
 
-LLM_API_KEY=          # Optional — leave blank to disable humanization
-LLM_MODEL=            # e.g. llama-3.3-70b-versatile (Groq) or claude-sonnet-4-6
+GROQ_API_KEY=          # Optional — leave blank to disable humanization
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
 `config.ts` must validate all required vars with Zod at startup. Missing vars = process exit with readable error.
 
-### 7.7 Error Handling
+### 7.8 Error Handling
 
 | Scenario | Bot response |
 |---|---|
@@ -775,15 +842,17 @@ LLM_MODEL=            # e.g. llama-3.3-70b-versatile (Groq) or claude-sonnet-4-6
 
 Slash command errors should be `ephemeral: true`.
 
-### 7.8 Acceptance Criteria
+### 7.9 Acceptance Criteria
 
-- [ ] `!status` returns accurate on/off state for all **15 devices**, matching dashboard.
-- [ ] `!room work2` returns only Work Room 2 devices (5 devices).
-- [ ] `!usage` reports total watts and estimated kWh from backend — not hardcoded.
-- [ ] Alert triggers → bot posts to `ALERT_CHANNEL_ID` within 5 seconds.
-- [ ] Invalid room name → helpful error, no crash.
-- [ ] Bot recovers from backend downtime.
-- [ ] No tokens or credentials in source code.
+- [x] `!status` returns accurate on/off state for all **15 devices**, matching dashboard.
+- [x] `!room work2` returns only Work Room 2 devices (5 devices).
+- [x] `!usage` reports total watts and estimated kWh from backend — not hardcoded.
+- [x] Alert triggers → bot posts to `ALERT_CHANNEL_ID` within 5 seconds.
+- [x] Invalid room name → helpful error, no crash.
+- [x] Bot recovers from backend downtime.
+- [x] No tokens or credentials in source code.
+- [x] Health check server responds on PORT for Render deployment.
+- [x] `tsx` is in `dependencies` (not `devDependencies`) for Render compatibility.
 
 ---
 
@@ -795,25 +864,24 @@ This section is the authoritative contract. Backend implements this; dashboard a
 
 | Method | Path | Consumer | Purpose |
 |---|---|---|---|
+| GET | `/api/status` | All | Health check with simulator metadata |
 | GET | `/api/devices` | Dashboard, Bot | All 15 devices grouped by room |
 | GET | `/api/devices/:room` | Dashboard, Bot | 5 devices for a specific room |
-| GET | `/api/power/summary` | Dashboard, Bot | Power totals |
-| GET | `/api/alerts` | Dashboard | Current alerts |
-| GET | `/api/status` | Bot (health) | Backend health check |
+| GET | `/api/power` | Dashboard | Full power payload with breakdown |
+| GET | `/api/power/summary` | Dashboard, Bot | Bot-friendly power summary |
+| GET | `/api/alerts` | Dashboard | Queryable alert feed |
 
 ### 8.2 WebSocket Events
 
 | Event name | Broadcast when | Consumer |
 |---|---|---|
-| `device_update` | Any device toggles | Dashboard, Bot (optional) |
-| `alert` | Alert condition triggered | Dashboard, Bot |
-| `power_update` | After any device toggle | Dashboard |
+| `device-update` | Simulator flips a device (every 30-60s) | Dashboard, Bot (optional) |
+| `alert-triggered` | Alert condition triggered | Dashboard, Bot |
+| `power-update` | Fixed 5-second interval | Dashboard |
 
 ### 8.3 Canonical Type Definitions
 
 ```ts
-// Types that every component must agree on:
-
 interface Device {
   id: string;
   name: string;
@@ -832,16 +900,13 @@ interface PowerSummary {
 
 interface Alert {
   id: string;
-  type: "after-hours" | "continuous-runtime" | "anomaly";
-  room: string;          // room-id or "all"
+  type: "after-hours" | "continuous-runtime";
+  severity: "warning" | "info";
+  room: string;
   message: string;
+  devices: Array<{ id: string; name: string }>;
   triggeredAt: string;   // ISO 8601 UTC
-}
-
-// WebSocket message wrapper
-interface WsMessage {
-  event: "device_update" | "alert" | "power_update";
-  data: Device | Alert | PowerSummary;
+  resolvedAt: string | null;
 }
 ```
 
@@ -857,21 +922,21 @@ The backend alert engine runs on every simulator tick and whenever a device togg
 
 **Triggered per room** (one alert per room, not per device).
 
-**Message template:** `"{Room} still has {N} device(s) ON. Office hours ended at 5 PM."`
+**Message template:** `"{Room} has {N} device(s) ON at {time} (after office hours)"`
 
 **Re-trigger:** Only once per room per out-of-hours session. Do not flood alerts.
 
 ### Alert Type 2: Continuous Runtime
 
-**Condition:** All 5 devices in a room have been continuously ON for more than 2 hours (their `lastChanged` timestamps all indicate the device went ON more than 2 hours ago and status is still ON).
+**Condition:** Any device in a room has been continuously ON for more than 2 hours.
 
 **Triggered per room.**
 
-**Message template:** `"All devices in {Room} have been running for over 2 hours continuously."`
+**Message template:** `"{Room}: All devices have been running for over 2 hours continuously."`
 
 ### Alert Deduplication
 
-Do not re-emit the same alert type for the same room within 15 minutes. Use a simple in-memory map: `{ roomId-alertType: lastTriggeredAt }`.
+Only one active alert per type per room is maintained. Resolved alerts remain in the `alerts` array with a non-null `resolvedAt`.
 
 ---
 
@@ -886,33 +951,71 @@ roomWatts(room) = sum(device.powerDraw for each device in room)
 
 totalWatts = sum(roomWatts for all rooms)
 
-estimatedKwhToday = totalWatts × hoursElapsedToday / 1000
-  where hoursElapsedToday = currentHour + (currentMinute / 60)
+estimatedKwhToday = (totalPower / 1000) * officeHoursElapsed
+  where officeHoursElapsed is clamped to the office-hour window
 ```
 
 **Maximum theoretical load:** 6 fans × 60W + 9 lights × 15W = **495W**
 
 ---
 
-## 11. Deliverables Checklist
+## 11. Deployment
+
+### Live URLs
+
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Dashboard | Vercel | [power-desk.vercel.app](https://power-desk.vercel.app/) |
+| Backend API | Render | [powerdesk-api.onrender.com](https://powerdesk-api.onrender.com/) |
+| Discord Bot | Render | [powerdesk-bot.onrender.com](https://powerdesk-bot.onrender.com/) |
+| Keep-alive | UptimeRobot | Pings both Render services every 5 minutes |
+
+### Deployment Architecture
+
+```
+┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
+│   Vercel     │────▶│   Render         │◀────│  UptimeRobot │
+│  (Dashboard) │     │  (Backend + Bot) │     │  (5min ping) │
+└──────────────┘     └──────────────────┘     └──────────────┘
+                            │
+                     ┌──────▼──────┐
+                     │   Discord   │
+                     │   Gateway   │
+                     └─────────────┘
+```
+
+### Key Deployment Details
+
+- **Backend:** WebSocket shares port 5000 with Express (single port for Render)
+- **Bot:** Runs health check server on `PORT` env var for Render port detection
+- **Dashboard:** `VITE_BACKEND_URL` and `VITE_WS_URL` baked in at build time
+- **Bot deps:** `tsx` must be in `dependencies` (not `devDependencies`) for Render
+
+---
+
+## 12. Deliverables Checklist
 
 ### Required (graded)
 
-- [ ] **Public Git repository** with clean commit history
-- [ ] **README.md** at root — explains how to run backend, dashboard, and bot from scratch
-- [ ] **`diagrams/system-diagram.*`** — high-level flow: simulator → backend → dashboard + bot → user. Do NOT use Mermaid. Use any other tool or draw manually.
-- [ ] **`diagrams/circuit-schematic.*`** — Wokwi or Tinkercad schematic for one room (5 devices: 2 fans, 3 lights) wired to an ESP32/Arduino. Must make physical sense.
-- [ ] **Working backend** — all endpoints respond, simulator running, WS broadcasting
-- [ ] **Working dashboard** — all 15 devices visible, real-time updates, power meter, alert panel
-- [ ] **Working Discord bot** — all 3 commands functional with live backend data
-- [ ] **`.env.example`** for each component
-- [ ] **README sections** for each component (setup + how to run)
+- [x] **Public Git repository** with clean commit history
+- [x] **README.md** at root — explains how to run backend, dashboard, and bot from scratch
+- [x] **`docs/system-diagram.svg`** — high-level flow: simulator → backend → dashboard + bot → user
+- [x] **`docs/architecture-diagram.svg`** — detailed architecture
+- [x] **`docs/office-floorplan.svg`** — office floor plan with device positions
+- [x] **Working backend** — all endpoints respond, simulator running, WS broadcasting
+- [x] **Working dashboard** — all 15 devices visible, real-time updates, power meter, alert panel
+- [x] **Working Discord bot** — all 3 commands functional with live backend data
+- [x] **`.env.example`** for each component
+- [x] **README sections** for each component (setup + how to run)
+- [x] **Deployed** on Vercel + Render with UptimeRobot keep-alive
 
 ### Bonus (extra points)
 
-- [ ] Animated floor plan (fans spin, lights glow)
-- [ ] Bot proactively posts alerts to Discord channel via WebSocket
-- [ ] LLM-humanized bot responses (Groq, OpenRouter, etc.)
+- [x] Animated floor plan (fans spin, lights glow)
+- [x] Bot proactively posts alerts to Discord channel via WebSocket
+- [x] LLM-humanized bot responses (Groq)
+- [x] TypeScript strict mode with zero errors
+- [x] 112 tests passing (57 backend + 55 bot)
 
 ### Video Demo
 
@@ -922,7 +1025,7 @@ estimatedKwhToday = totalWatts × hoursElapsedToday / 1000
 
 ---
 
-## 12. Evaluation Criteria
+## 13. Evaluation Criteria
 
 | Criterion | Weight |
 |---|---|
@@ -938,18 +1041,7 @@ estimatedKwhToday = totalWatts × hoursElapsedToday / 1000
 
 ---
 
-## 13. Git Strategy
-
-### Branch Structure
-
-```
-main
-├── backend/main          → backend code
-├── feature/dashboard     → React dashboard
-└── feature/discord-bot   → Discord bot
-```
-
-Merge to `main` via PRs with at least one teammate review.
+## 14. Git Strategy
 
 ### Commit Convention
 
@@ -961,16 +1053,8 @@ fix(backend): correct device count to 15 in simulator init
 fix(dashboard): prevent re-render of DeviceCard when unrelated device changes
 docs(root): update README with setup instructions
 test(backend): add unit tests for power calculator
+chore: clean up redundant files and fix deployment blockers
 ```
-
-### PR Checklist (before merge to main)
-
-- [ ] All component acceptance criteria pass
-- [ ] `.env.example` is accurate and complete
-- [ ] No hardcoded URLs, tokens, or credentials in source
-- [ ] Biome passes with no errors (frontend / bot)
-- [ ] README section for this component is written and accurate
-- [ ] Device count is **15** everywhere (no stale "18" references)
 
 ---
 
@@ -992,11 +1076,11 @@ drawing-room-light-3      work-room-1-light-3      work-room-2-light-3
 |---|---|
 | Using `18` as device count | Always use **15** |
 | Bot fabricating or hardcoding data | All data must come from a live backend HTTP call |
-| Dashboard calculating power from raw devices | Power comes from `/api/power/summary` |
+| Dashboard calculating power from raw devices | Power comes from `/api/power/summary` or `/api/power` |
 | Re-fetching all devices on every WS message | Use `updateDevice(id, patch)` for single-device updates |
 | Polling more than once per 5 seconds on power | Once per 5 seconds is fine; less is better |
-| Emitting the same alert repeatedly every tick | Deduplicate within 15-minute windows |
-| Mermaid diagrams | Use any other tool. Mermaid is explicitly banned by the problem statement. |
+| Comparing `device.status === 'on'` (string) | Use `isDeviceOn(device.status)` helper — backend sends boolean |
+| Running `tsx` from devDependencies on Render | Move `tsx` to `dependencies` |
 
 ## Appendix C: Sample Power Scenarios
 
