@@ -27,9 +27,21 @@ Real-time office device monitoring dashboard with a Discord bot for instant quer
 
 ## Architecture
 
-![System Architecture](docs/architecture-diagram.svg)
+![Layer Architecture](docs/architecture-diagram.svg)
 
 ![Office Floor Plan](docs/office-floorplan.svg)
+
+### Hardware Schematic
+
+The physical circuit was designed in Tinkercad and represents one room's device setup (5 devices: 2 fans + 3 lights). The Arduino UNO substitutes for ESP32 due to Tinkercad's component limits.
+
+![Tinkercad Circuit](docs/tinkercad%20circuit.png)
+
+**Key components:**
+- **Arduino UNO** — Microcontroller (digital I/O, ADC) controlling device states
+- **Relay + Transistor assemblies** — Transistor drives the relay coil; relay switches device power on/off
+- **Potentiometers** — Simulate ACS712 current sensor readings (Tinkercad lacks a native current-sensor component)
+- **Light bulbs** — Represent the 5 simulated devices per room
 
 ---
 
