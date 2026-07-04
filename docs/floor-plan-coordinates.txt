@@ -1,0 +1,34 @@
+DEVICE COORDINATES FOR FLOOR PLAN INTEGRATION
+SVG viewBox: 0 0 1000 700
+All coordinates are (cx, cy) for circle elements
+18 devices total, 6 per room (2 fans + 4 lights) — see PRE-WORK section for how to verify this against the live API
+
+Drawing Room (data-room="drawing-room"):
+  fan-drawing-1:    cx=120,  cy=120
+  fan-drawing-2:    cx=250,  cy=120
+  light-drawing-1:  cx=90,   cy=280
+  light-drawing-2:  cx=160,  cy=280
+  light-drawing-3:  cx=230,  cy=280
+  light-drawing-4:  cx=300,  cy=280
+
+Work Room 1 (data-room="work-room-1"):
+  fan-work1-1:      cx=420,  cy=200
+  fan-work1-2:      cx=580,  cy=200
+  light-work1-1:    cx=390,  cy=280
+  light-work1-2:    cx=470,  cy=280
+  light-work1-3:    cx=550,  cy=280
+  light-work1-4:    cx=620,  cy=280
+
+Work Room 2 (data-room="work-room-2"):
+  fan-work2-1:      cx=480,  cy=500
+  fan-work2-2:      cx=750,  cy=500
+  light-work2-1:    cx=400,  cy=590
+  light-work2-2:    cx=560,  cy=590
+  light-work2-3:    cx=720,  cy=590
+  light-work2-4:    cx=870,  cy=590
+
+DEVICE NAMING CONVENTION (must match backend D.1 spec):
+  Type: "fan" or "light"
+  Room: "drawing-room", "work-room-1", "work-room-2"
+  Format: {type}-{room-short}-{number}
+  Example: fan-drawing-1, light-work2-4

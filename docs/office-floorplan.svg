@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1000" height="700" fill="#f5f0e8"/>
+  
+  <!-- Outer building boundary -->
+  <rect x="50" y="50" width="900" height="600" fill="none" stroke="#4a4a4a" stroke-width="4"/>
+  
+  <!-- Room divider walls -->
+  <!-- Vertical wall separating Drawing Room from Work Room 1/2 -->
+  <line x1="350" y1="50" x2="350" y2="650" stroke="#4a4a4a" stroke-width="4"/>
+  
+  <!-- Horizontal wall separating Work Room 1 from Work Room 2 -->
+  <line x1="350" y1="350" x2="950" y2="350" stroke="#4a4a4a" stroke-width="4"/>
+  
+  <!-- Doors (10px × 4px dark rectangles on walls) -->
+  <rect x="340" y="100" width="10" height="4" fill="#2d2d2d"/> <!-- Door 1: Drawing Room entry -->
+  <rect x="340" y="400" width="10" height="4" fill="#2d2d2d"/> <!-- Door 2: Work Room 1 entry -->
+  <rect x="900" y="340" width="4" height="10" fill="#2d2d2d"/> <!-- Door 3: Work Room 2 entry -->
+  
+  <!-- Windows (light blue 15×4 rectangles on outer walls) -->
+  <rect x="50" y="150" width="4" height="15" fill="#87ceeb" opacity="0.6"/> <!-- Window: West side -->
+  <rect x="50" y="450" width="4" height="15" fill="#87ceeb" opacity="0.6"/> <!-- Window: West side -->
+  <rect x="500" y="650" width="15" height="4" fill="#87ceeb" opacity="0.6"/> <!-- Window: South side -->
+  
+  <!-- ROOM 1: DRAWING ROOM (x: 50-350, y: 50-650) -->
+  <g id="drawing-room" data-room="drawing-room">
+    <!-- Room label -->
+    <text x="150" y="680" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#2d2d2d" text-anchor="middle">
+      DRAWING ROOM
+    </text>
+    
+    <!-- Furniture (visual context only, not interactive) -->
+    <!-- Sofa -->
+    <rect x="70" y="80" width="80" height="40" fill="#8b7355" opacity="0.7" rx="2"/>
+    <text x="110" y="105" font-family="Inter, sans-serif" font-size="10" fill="white" text-anchor="middle">Sofa</text>
+    
+    <!-- Coffee table -->
+    <rect x="75" y="140" width="60" height="40" fill="#a0a0a0" opacity="0.6" rx="2"/>
+    <text x="105" y="165" font-family="Inter, sans-serif" font-size="9" fill="white" text-anchor="middle">Table</text>
+    
+    <!-- Plant 1 -->
+    <circle cx="90" cy="230" r="12" fill="#228b22" opacity="0.7"/>
+    <text x="90" y="235" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">🌿</text>
+    
+    <!-- Plant 2 -->
+    <circle cx="280" cy="200" r="12" fill="#228b22" opacity="0.7"/>
+    <text x="280" y="205" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">🌿</text>
+    
+    <!-- Devices: 2 Fans + 4 Lights (6 total, matches backend's 18-device / 3-room split) -->
+    <!-- Fan 1: Drawing Room -->
+    <g id="device-fan-drawing-1" data-device="fan-drawing-1" data-type="fan" data-room="drawing-room">
+      <circle cx="120" cy="120" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 120 110 L 125 130 L 120 125 L 115 130 Z" fill="#333"/>
+      <text x="120" y="150" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 1</text>
+    </g>
+    
+    <!-- Fan 2: Drawing Room -->
+    <g id="device-fan-drawing-2" data-device="fan-drawing-2" data-type="fan" data-room="drawing-room">
+      <circle cx="250" cy="120" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 250 110 L 255 130 L 250 125 L 245 130 Z" fill="#333"/>
+      <text x="250" y="150" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 2</text>
+    </g>
+    
+    <!-- Light 1: Drawing Room -->
+    <g id="device-light-drawing-1" data-device="light-drawing-1" data-type="light" data-room="drawing-room">
+      <circle cx="90" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="90" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 1</text>
+    </g>
+    
+    <!-- Light 2: Drawing Room -->
+    <g id="device-light-drawing-2" data-device="light-drawing-2" data-type="light" data-room="drawing-room">
+      <circle cx="160" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="160" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 2</text>
+    </g>
+    
+    <!-- Light 3: Drawing Room -->
+    <g id="device-light-drawing-3" data-device="light-drawing-3" data-type="light" data-room="drawing-room">
+      <circle cx="230" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="230" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 3</text>
+    </g>
+
+    <!-- Light 4: Drawing Room -->
+    <g id="device-light-drawing-4" data-device="light-drawing-4" data-type="light" data-room="drawing-room">
+      <circle cx="300" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="300" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 4</text>
+    </g>
+  </g>
+  
+  <!-- ROOM 2: WORK ROOM 1 (x: 350-650, y: 50-350) -->
+  <g id="work-room-1" data-room="work-room-1">
+    <!-- Room label -->
+    <text x="500" y="370" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#2d2d2d" text-anchor="middle">
+      WORK ROOM 1
+    </text>
+    
+    <!-- Desks (4 desks, 2 rows × 2 columns) -->
+    <!-- Desk 1 -->
+    <rect x="380" y="80" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="405" y="105" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 2 -->
+    <rect x="450" y="80" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="475" y="105" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 3 -->
+    <rect x="550" y="80" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="575" y="105" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 4 -->
+    <rect x="620" y="80" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="645" y="105" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Devices: 2 Fans + 4 Lights (6 total) -->
+    <!-- Fan 1: Work Room 1 -->
+    <g id="device-fan-work1-1" data-device="fan-work1-1" data-type="fan" data-room="work-room-1">
+      <circle cx="420" cy="200" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 420 190 L 425 210 L 420 205 L 415 210 Z" fill="#333"/>
+      <text x="420" y="230" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 1</text>
+    </g>
+    
+    <!-- Fan 2: Work Room 1 -->
+    <g id="device-fan-work1-2" data-device="fan-work1-2" data-type="fan" data-room="work-room-1">
+      <circle cx="580" cy="200" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 580 190 L 585 210 L 580 205 L 575 210 Z" fill="#333"/>
+      <text x="580" y="230" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 2</text>
+    </g>
+    
+    <!-- Light 1: Work Room 1 -->
+    <g id="device-light-work1-1" data-device="light-work1-1" data-type="light" data-room="work-room-1">
+      <circle cx="390" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="390" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 1</text>
+    </g>
+    
+    <!-- Light 2: Work Room 1 -->
+    <g id="device-light-work1-2" data-device="light-work1-2" data-type="light" data-room="work-room-1">
+      <circle cx="470" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="470" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 2</text>
+    </g>
+    
+    <!-- Light 3: Work Room 1 -->
+    <g id="device-light-work1-3" data-device="light-work1-3" data-type="light" data-room="work-room-1">
+      <circle cx="550" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="550" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 3</text>
+    </g>
+
+    <!-- Light 4: Work Room 1 -->
+    <g id="device-light-work1-4" data-device="light-work1-4" data-type="light" data-room="work-room-1">
+      <circle cx="620" cy="280" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="620" y="310" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 4</text>
+    </g>
+  </g>
+  
+  <!-- ROOM 3: WORK ROOM 2 (x: 350-950, y: 350-650) -->
+  <g id="work-room-2" data-room="work-room-2">
+    <!-- Room label -->
+    <text x="650" y="670" font-family="Inter, sans-serif" font-size="14" font-weight="bold" fill="#2d2d2d" text-anchor="middle">
+      WORK ROOM 2
+    </text>
+    
+    <!-- Desks (6 desks, 2 rows × 3 columns) -->
+    <!-- Desk 1 -->
+    <rect x="380" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="405" y="405" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 2 -->
+    <rect x="450" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="475" y="405" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 3 -->
+    <rect x="550" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="575" y="405" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 4 -->
+    <rect x="650" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="675" y="405" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 5 -->
+    <rect x="750" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="775" y="405" font-family="Interior, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Desk 6 -->
+    <rect x="850" y="380" width="50" height="35" fill="#c9a961" opacity="0.7" rx="2"/>
+    <text x="875" y="405" font-family="Inter, sans-serif" font-size="8" fill="white" text-anchor="middle">Desk</text>
+    
+    <!-- Devices: 2 Fans + 4 Lights (6 total) -->
+    <!-- Fan 1: Work Room 2 -->
+    <g id="device-fan-work2-1" data-device="fan-work2-1" data-type="fan" data-room="work-room-2">
+      <circle cx="480" cy="500" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 480 490 L 485 510 L 480 505 L 475 510 Z" fill="#333"/>
+      <text x="480" y="530" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 1</text>
+    </g>
+    
+    <!-- Fan 2: Work Room 2 -->
+    <g id="device-fan-work2-2" data-device="fan-work2-2" data-type="fan" data-room="work-room-2">
+      <circle cx="750" cy="500" r="8" fill="#666" opacity="0.3"/>
+      <path d="M 750 490 L 755 510 L 750 505 L 745 510 Z" fill="#333"/>
+      <text x="750" y="530" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Fan 2</text>
+    </g>
+    
+    <!-- Light 1: Work Room 2 -->
+    <g id="device-light-work2-1" data-device="light-work2-1" data-type="light" data-room="work-room-2">
+      <circle cx="400" cy="590" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="400" y="620" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 1</text>
+    </g>
+    
+    <!-- Light 2: Work Room 2 -->
+    <g id="device-light-work2-2" data-device="light-work2-2" data-type="light" data-room="work-room-2">
+      <circle cx="560" cy="590" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="560" y="620" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 2</text>
+    </g>
+    
+    <!-- Light 3: Work Room 2 -->
+    <g id="device-light-work2-3" data-device="light-work2-3" data-type="light" data-room="work-room-2">
+      <circle cx="720" cy="590" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="720" y="620" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 3</text>
+    </g>
+
+    <!-- Light 4: Work Room 2 -->
+    <g id="device-light-work2-4" data-device="light-work2-4" data-type="light" data-room="work-room-2">
+      <circle cx="870" cy="590" r="6" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+      <text x="870" y="620" font-family="Inter, sans-serif" font-size="9" fill="#2d2d2d" text-anchor="middle">Light 4</text>
+    </g>
+  </g>
+  
+  <!-- Legend (bottom right corner) -->
+  <g id="legend" transform="translate(750, 620)">
+    <rect x="0" y="0" width="180" height="70" fill="white" stroke="#ccc" stroke-width="1" opacity="0.95" rx="3"/>
+    <text x="10" y="18" font-family="Inter, sans-serif" font-size="11" font-weight="bold" fill="#2d2d2d">LEGEND</text>
+    
+    <!-- Fan icon example -->
+    <circle cx="30" cy="35" r="5" fill="#666" opacity="0.3"/>
+    <path d="M 30 30 L 33 40 L 30 37 L 27 40 Z" fill="#333"/>
+    <text x="50" y="40" font-family="Inter, sans-serif" font-size="10" fill="#2d2d2d">Fan (2 per room)</text>
+    
+    <!-- Light icon example -->
+    <circle cx="30" cy="55" r="4" fill="#ffd700" opacity="0.5" stroke="#ffa500" stroke-width="1"/>
+    <text x="50" y="60" font-family="Inter, sans-serif" font-size="10" fill="#2d2d2d">Light (4 per room)</text>
+  </g>
+  
+  <!-- Device coordinate reference table (for Person 2 integration) -->
+  <!-- This is a comment block, not rendered but available for copy-paste -->
+  <!--
+  DEVICE COORDINATES (cx, cy for circle elements) — 18 devices total, 6 per room:
+  
+  Drawing Room:
+    fan-drawing-1: cx=120, cy=120
+    fan-drawing-2: cx=250, cy=120
+    light-drawing-1: cx=90, cy=280
+    light-drawing-2: cx=160, cy=280
+    light-drawing-3: cx=230, cy=280
+    light-drawing-4: cx=300, cy=280
+  
+  Work Room 1:
+    fan-work1-1: cx=420, cy=200
+    fan-work1-2: cx=580, cy=200
+    light-work1-1: cx=390, cy=280
+    light-work1-2: cx=470, cy=280
+    light-work1-3: cx=550, cy=280
+    light-work1-4: cx=620, cy=280
+  
+  Work Room 2:
+    fan-work2-1: cx=480, cy=500
+    fan-work2-2: cx=750, cy=500
+    light-work2-1: cx=400, cy=590
+    light-work2-2: cx=560, cy=590
+    light-work2-3: cx=720, cy=590
+    light-work2-4: cx=870, cy=590
+  
+  NOTE: this 2-fans + 4-lights-per-room split (18 total) is this plan's working assumption to match
+  the backend spec's "18 devices (6 fans, 12 lights)" objective. Confirm against a live
+  `GET /api/devices` call (see PRE-WORK section) before finalizing — if the real room split differs,
+  update these coordinates and the device IDs to match, don't leave a mismatch between SVG and API.
+  
+  How to use in React/JavaScript:
+  1. Load this SVG as an image or inline SVG
+  2. Query elements by data-device attribute: document.querySelector('[data-device="fan-drawing-1"]')
+  3. Update circle fill/opacity based on device.status (ON = glow, OFF = dim)
+  4. Animate fan rotations using CSS transforms on fan SVG paths
+  -->
+</svg>
