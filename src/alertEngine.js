@@ -124,6 +124,9 @@ class AlertEngine extends EventEmitter {
       resolvedAt: null,
     };
     this.alerts.push(alert);
+    if (this.alerts.length > 200) {
+      this.alerts = this.alerts.slice(-200);
+    }
     const mapKey = data._key || `${data.type}:${data.room}`;
     this._map.set(mapKey, alert);
     logger.info(`Alert #${id} [${data.severity}] ${data.room}: ${data.message}`);

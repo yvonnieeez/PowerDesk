@@ -6,7 +6,7 @@ function timestamp() {
 
 const logger = {
   info: (...args) => {
-    if (isDev) console.log(`[${timestamp()}] [INFO]`, ...args);
+    console.log(`[${timestamp()}] [INFO]`, ...args);
   },
   warn: (...args) => {
     console.warn(`[${timestamp()}] [WARN]`, ...args);

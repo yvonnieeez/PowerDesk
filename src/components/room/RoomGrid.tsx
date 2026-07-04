@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react';
 import type { Device } from '../../types/device';
 import { RoomCard } from './RoomCard';
 import { groupByRoom } from '../../utils/deviceHelpers';
@@ -10,8 +11,11 @@ interface RoomGridProps {
   isLoading?: boolean;
 }
 
-export function RoomGrid({ devices, isLoading }: RoomGridProps) {
+export const RoomGrid = memo(function RoomGrid({ devices, isLoading }: RoomGridProps) {
   const alerts = useAlertStore((state) => state.alerts);
+
+  const groupedDevices = useMemo(() => groupByRoom(devices), [devices]);
+  const alertRooms = useMemo(() => new Set(alerts.map((a) => a.room)), [alerts]);
 
   if (isLoading) {
     return (
@@ -33,9 +37,6 @@ export function RoomGrid({ devices, isLoading }: RoomGridProps) {
     );
   }
 
-  const groupedDevices = groupByRoom(devices);
-  const alertRooms = new Set(alerts.map((a) => a.room));
-
   return (
     <div className="space-y-3">
       {ROOM_ORDER.map((room) => (
@@ -48,4 +49,4 @@ export function RoomGrid({ devices, isLoading }: RoomGridProps) {
       ))}
     </div>
   );
-}
+});

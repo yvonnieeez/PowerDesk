@@ -1,5 +1,6 @@
 /* Hallmark · FloorPlan · v1 · layout: full-spec · devices: 15 · furniture: spec-match */
 
+import { useMemo, memo } from 'react';
 import { useDeviceStore } from '../../store/deviceStore';
 import { useAlertStore } from '../../store/alertStore';
 import { isDeviceOn } from '../../types/device';
@@ -69,10 +70,20 @@ function Desk({ x, y }: { x: number; y: number }) {
   );
 }
 
-export function FloorPlan() {
+export const FloorPlan = memo(function FloorPlan() {
   const devices = useDeviceStore((state) => state.devices);
   const alerts = useAlertStore((state) => state.alerts);
-  const alertRooms = new Set(alerts.map((a) => a.room));
+
+  const alertRooms = useMemo(() => new Set(alerts.map((a) => a.room)), [alerts]);
+
+  const devicesByRoom = useMemo(() => {
+    const grouped: Record<string, typeof devices> = {};
+    for (const d of devices) {
+      if (!grouped[d.room]) grouped[d.room] = [];
+      grouped[d.room].push(d);
+    }
+    return grouped;
+  }, [devices]);
 
   return (
     <div className="bg-surface rounded-lg border border-border p-4">
@@ -203,7 +214,7 @@ export function FloorPlan() {
           {/* Device Markers */}
           {ROOM_CONFIG.map((room) => {
             const positions = DEVICE_POSITIONS[room.id];
-            const roomDevices = devices.filter((d) => d.room === room.id);
+            const roomDevices = devicesByRoom[room.id] || [];
 
             return (
               <g key={`markers-${room.id}`}>
@@ -263,7 +274,7 @@ export function FloorPlan() {
           <g transform="translate(0, 490)">
             <rect x="10" y="0" width="870" height="30" fill="var(--color-bg)" rx="4" />
             {ROOM_CONFIG.map((room, i) => {
-              const roomDevices = devices.filter((d) => d.room === room.id);
+              const roomDevices = devicesByRoom[room.id] || [];
               const fansTotal = roomDevices.filter((d) => d.type === 'fan').length;
               const fansOn = roomDevices.filter((d) => d.type === 'fan' && isDeviceOn(d.status)).length;
               const lightsTotal = roomDevices.filter((d) => d.type === 'light').length;
@@ -353,4 +364,4 @@ export function FloorPlan() {
     </div>
   </div>
   );
-}
+});

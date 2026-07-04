@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { wrapResponse } = require('../utils/response');
+const { version } = require('../../package.json');
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get('/', (req, res) => {
       status: 'healthy',
       backend: {
         uptime,
-        version: '1.0.0',
+        version,
       },
       simulator: {
         running: sim ? sim.running : false,

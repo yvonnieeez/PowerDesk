@@ -52,19 +52,40 @@ function startWebSocketServer(simulator, alertEngine, powerCalculator, options =
     });
   });
 
+  let lastPowerPayload = null;
   const powerInterval = setInterval(() => {
     const byRoom = powerCalculator.getPowerByRoom();
-    broadcast({
+    const payload = {
       type: 'power-update',
       timestamp: new Date().toISOString(),
       data: {
         totalPower: powerCalculator.getTotalPower(),
         byRoom,
       },
-    });
+    };
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr !== lastPowerPayload) {
+      lastPowerPayload = payloadStr;
+      broadcast(payload);
+    }
   }, 5000);
 
+  // Heartbeat: ping clients every 30s, terminate dead ones
+  const heartbeatInterval = setInterval(() => {
+    for (const client of wss.clients) {
+      if (client.isAlive === false) {
+        logger.debug('Terminating stale WebSocket client');
+        client.terminate();
+        continue;
+      }
+      client.isAlive = false;
+      client.ping();
+    }
+  }, 30000);
+
   wss.on('connection', (ws) => {
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
     logger.info('WebSocket client connected');
 
     ws.on('close', () => {
@@ -78,6 +99,7 @@ function startWebSocketServer(simulator, alertEngine, powerCalculator, options =
 
   function close() {
     clearInterval(powerInterval);
+    clearInterval(heartbeatInterval);
     wss.close();
   }
 

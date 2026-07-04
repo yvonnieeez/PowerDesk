@@ -30,8 +30,9 @@ simulator.start();
 
 // Demo alert generator: fires every 30s using real simulator device data
 // so the Discord bot receives alerts during demos. Disable with DEMO_ALERTS=false.
+let demoAlertInterval = null;
 if (process.env.DEMO_ALERTS !== 'false') {
-  setInterval(() => {
+  demoAlertInterval = setInterval(() => {
     const allDevices = simulator.getAllDevices();
     const rooms = Object.keys(allDevices).filter((r) =>
       allDevices[r].some((d) => d.status)
@@ -56,6 +57,17 @@ if (process.env.DEMO_ALERTS !== 'false') {
     });
   }, 30000);
 }
+
+process.on('SIGTERM', () => {
+  if (demoAlertInterval) clearInterval(demoAlertInterval);
+  server.close();
+  process.exit(0);
+});
+process.on('SIGINT', () => {
+  if (demoAlertInterval) clearInterval(demoAlertInterval);
+  server.close();
+  process.exit(0);
+});
 
 app.use(cors());
 app.use(express.json());

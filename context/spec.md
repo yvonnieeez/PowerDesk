@@ -4,11 +4,6 @@
 **Status:** Single Source of Truth  
 **Last updated:** July 2026
 
-> **⚠️ Device Count Fix (read first)**  
-> The problem statement contains an error: it says "18 devices." The correct count is **15 devices total** — 3 rooms × 5 devices per room (2 fans + 3 lights). Every test, assertion, log message, and hardcoded count in the codebase must use **15**, not 18.
-
----
-
 ## Table of Contents
 
 1. [System Overview](#1-system-overview)

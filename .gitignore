@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 .env.*.local
+discord-bot/.env
 *.log
 .DS_Store
 Thumbs.db
@@ -10,3 +11,4 @@ Thumbs.db
 *.swp
 *.swo
 .mimocode/
+context/

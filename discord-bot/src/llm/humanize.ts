@@ -8,6 +8,9 @@ const SYSTEM_PROMPTS: Record<HumanizeType, string> = {
   alert: `You are a friendly office assistant. Given an alert about devices left on, write a brief 1-2 sentence warning in a concerned but helpful tone. Mention the room and what's happening. Keep it under 60 words.`,
 };
 
+const MAX_OUTPUT_CHARS = 1800;
+const FETCH_TIMEOUT_MS = 10000;
+
 export async function humanize(
   type: HumanizeType,
   data: unknown,
@@ -15,6 +18,9 @@ export async function humanize(
   if (!config.GROQ_API_KEY) {
     return undefined;
   }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
     const response = await fetch(
@@ -34,6 +40,7 @@ export async function humanize(
           max_tokens: 150,
           temperature: 0.7,
         }),
+        signal: controller.signal,
       },
     );
 
@@ -61,9 +68,15 @@ export async function humanize(
       },
       "LLM humanization successful",
     );
-    return content;
+    return content.length > MAX_OUTPUT_CHARS ? content.slice(0, MAX_OUTPUT_CHARS) : content;
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      logger.warn({ type }, "Groq API request timed out");
+      return undefined;
+    }
     logger.warn({ type, error }, "LLM humanization failed");
     return undefined;
+  } finally {
+    clearTimeout(timeout);
   }
 }
