@@ -33,7 +33,9 @@ Real-time office device monitoring dashboard with a Discord bot for instant quer
 
 ### Hardware Schematic
 
-The physical circuit was designed in Tinkercad and represents one room's device setup (5 devices: 2 fans + 3 lights). The Arduino UNO substitutes for ESP32 due to Tinkercad's component limits.
+The physical circuit was designed in [Tinkercad](https://www.tinkercad.com/things/51fWdaQGKQP/editel?returnTo=%2Fdashboard&sharecode=cQZliYOn4Gtoj2ODzex6wwm0VU_xbM4oFoBBkXlD29o) and represents one room's device setup (5 devices: 2 fans + 3 lights). The Arduino UNO substitutes for ESP32 due to Tinkercad's component limits.
+
+[View Interactive Circuit in Tinkercad](https://www.tinkercad.com/things/51fWdaQGKQP/editel?returnTo=%2Fdashboard&sharecode=cQZliYOn4Gtoj2ODzex6wwm0VU_xbM4oFoBBkXlD29o)
 
 ![Tinkercad Circuit](docs/tinkercad%20circuit.png)
 
